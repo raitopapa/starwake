@@ -1,0 +1,1 @@
+{"name":"starwake","version":"1.0.0","private":true,"type":"module","description":"Original mobile-friendly arcade space shooter","scripts":{"dev":"node tools/serve.mjs","build":"node tools/build.mjs","test":"node --test tests/*.test.mjs","check":"npm test && npm run build"},"engines":{"node":">=20"}}
