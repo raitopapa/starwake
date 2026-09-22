@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080d12">
+  <meta name="description" content="星の彼方へ、撃ち抜け。3つの宙域と巨大ボスに挑む、スマホ・タブレット対応の宇宙シューティング。">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>STARWAKE ZENITH — 縦スクロールシューティング</title>
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icon-192.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <a class="brand" href="../" aria-label="ゲーム選択へ戻る"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 2 5 12 10 14-15-7L1 28l10-14Z"/><path d="m16 10 3 8-3-2-3 2Z" class="mark-cut"/></svg><span>STARWAKE<span class="brand-dot">✳</span></span></a>
+      <div class="header-caption">ZENITH <span> / VERTICAL SHOOTER</span></div>
+      <div class="header-actions">
+        <button class="icon-button" id="sound-toggle" aria-label="サウンドをオフ" aria-pressed="true"><span>SOUND ON</span></button>
+        <button class="icon-button help-button" id="help-open" aria-label="遊び方を開く">?<span>遊び方</span></button>
+      </div>
+    </header>
+    <main class="hangar" id="hangar">
+      <section class="hero-copy">
+        <div class="eyebrow"><span class="status-dot"></span> ALL SYSTEMS ONLINE <span class="coordinates">SW–01 / KESTREL</span></div>
+        <p class="issue-label">ZENITH / 縦スクロールシューティング</p>
+        <h1>STAR<span>WAKE<span class="title-star">✳</span></span></h1>
+        <h2>星の彼方へ、撃ち抜け。</h2>
+        <p class="intro">静寂を裂く、一機の軌跡。<br>3つの宙域、迫りくる弾幕、そして巨大な影。<br>最後のシグナルを、その先へ。</p>
+        <div class="launch-panel">
+          <div class="section-heading"><span>01 / FLIGHT CONFIG</span><span>出撃設定</span></div>
+          <fieldset class="difficulty"><legend class="sr-only">難易度</legend>
+            <label><input type="radio" name="difficulty" value="cadet"><span>CADET<small>はじめて</small></span></label>
+            <label><input type="radio" name="difficulty" value="pilot" checked><span>PILOT<small>スタンダード</small></span></label>
+            <label><input type="radio" name="difficulty" value="ace"><span>ACE<small>高難度</small></span></label>
+          </fieldset>
+          <button id="launch" class="launch-button"><span><small>READY WHEN YOU ARE</small>出撃する <b>LAUNCH</b></span><span class="launch-arrow">↗</span></button>
+          <div class="launch-foot"><span>指で移動 · オートショット</span><span>PC / MOBILE / TABLET</span></div>
+        </div>
+        <div class="personal-best"><span class="record-icon">◇</span><span>PERSONAL BEST<small>選択した宙域・難易度のベスト</small></span><strong id="best-score">000000</strong></div>
+      </section>
+      <section class="hangar-visual" aria-label="宇宙戦闘機と出撃宙域">
+        <div class="visual-tag"><span class="status-dot"></span> LIVE FROM THE OUTER RIM</div>
+        <canvas id="hero-canvas" aria-label="惑星の軌道上を飛ぶ戦闘機のアニメーション"></canvas>
+        <div class="craft-tag"><span class="crosshair">+</span><div>SW–01 <b>KESTREL</b><small>INTERCEPTOR CLASS / ALL-ROUND</small></div></div>
+        <div class="visual-bottom"><span>DEEP SPACE<br><b>NO TURNING BACK.</b></span><span class="orbit-symbol">◎</span></div>
+      </section>
+      <section class="sector-section" aria-label="出撃する宙域を選択">
+        <div class="section-heading"><span>02 / SELECT SECTOR</span><span>出撃する宙域を選択 →</span></div>
+        <div class="sectors">
+          <button class="sector-card selected" data-stage="0" aria-pressed="true"><span class="sector-number">01</span><span class="sector-art art-orbit"></span><span class="sector-copy"><small>ORBITAL FRONTIER</small><strong>蒼の軌道</strong><span>地球軌道 / 防衛艦隊</span></span><span class="sector-go">↗</span></button>
+          <button class="sector-card" data-stage="1" aria-pressed="false"><span class="sector-number">02</span><span class="sector-art art-nebula"></span><span class="sector-copy"><small>CRIMSON NEBULA</small><strong>紅の星雲</strong><span>星雲地帯 / 高速迎撃</span></span><span class="sector-go">↗</span></button>
+          <button class="sector-card" data-stage="2" aria-pressed="false"><span class="sector-number">03</span><span class="sector-art art-core"></span><span class="sector-copy"><small>THE SILENT CORE</small><strong>深淵の中枢</strong><span>敵要塞 / 最終決戦</span></span><span class="sector-go">↗</span></button>
+        </div>
+      </section>
+      <footer class="hangar-footer"><span>BUILT FOR THE LOVE OF ARCADE.</span><span>3 SECTORS <i>·</i> 5 WEAPONS <i>·</i> ONE PILOT</span><span id="offline-status">ZENITH / V2.0</span></footer>
+    </main>
+    <section class="flight" id="flight" hidden aria-label="シューティングゲーム">
+      <aside class="flight-side left-side"><span class="eyebrow">MISSION CONTROL</span><h2 id="side-sector">蒼の軌道</h2><p id="side-description">ORBITAL FRONTIER</p><div class="side-rule"></div><span class="muted-label">PERSONAL BEST</span><strong id="flight-best">000000</strong><div class="flight-instructions"><p><kbd>WASD</kbd> <kbd>↑↓←→</kbd> 移動</p><p><kbd>SHIFT</kbd> 精密移動</p><p><kbd>X</kbd> 武器切替</p><p><kbd>SPACE</kbd> ボム</p><p><kbd>C</kbd> オーバードライブ</p><p><kbd>ESC</kbd> ポーズ</p></div><p class="side-note">当たり判定は機体中心の白い点。<br>敵弾をかすめるとエネルギーが上昇。</p></aside>
+      <div class="game-shell" id="game-shell">
+        <canvas id="game-canvas" width="480" height="720" tabindex="0" aria-label="ゲーム画面。指でドラッグ、またはWASD・矢印キーで移動。射撃は自動。"></canvas>
+        <div class="hud"><div><span>SCORE <b id="hud-multiplier">×1</b></span><strong id="hud-score">000000</strong></div><div class="hud-right"><span id="hud-sector">SECTOR 01</span><button id="pause" class="pause-button" aria-label="一時停止">Ⅱ</button></div></div>
+        <div class="health-hud"><span>HULL</span><div id="hud-health" aria-label="残り耐久力"></div><span id="hud-power">LV.1</span></div>
+        <div class="boss-hud" id="boss-hud" hidden><div><span id="boss-name">AEGIS</span><span id="boss-phase">PHASE 1</span></div><div class="boss-track"><i id="boss-health"></i></div></div>
+        <div class="mission-banner" id="mission-banner" aria-live="polite"></div>
+        <div class="game-controls">
+          <button id="weapon" class="action-button weapon-button" aria-label="武器を切り替える"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19V9m6 10V3m6 16V9M3 9l3-3 3 3m0-6 3-3 3 3m0 6 3-3 3 3"/></svg><span id="weapon-name">PULSE<small>武器切替</small></span></button>
+          <button id="overdrive" class="action-button drive-button" aria-label="オーバードライブ発動" disabled><span class="drive-fill" id="drive-fill"></span><span>OVERDRIVE<small id="drive-label">0%</small></span></button>
+          <button id="bomb" class="action-button bomb-button" aria-label="ボムを使用"><span class="bomb-symbol">✳</span><span>NOVA<small id="bomb-count">ボム × 3</small></span></button>
+        </div>
+        <button id="focus" class="vertical-focus" aria-pressed="false">FOCUS / 低速</button><div class="touch-tip" id="touch-tip">画面をドラッグして移動 · 射撃は自動</div>
+      </div>
+      <aside class="flight-side right-side"><span class="eyebrow">SW–01 / KESTREL</span><div class="radar"><i></i><b>✳</b></div><span class="muted-label">FLIGHT TIME</span><strong id="flight-time">00:00</strong><div class="side-rule"></div><span class="muted-label">KILLS</span><strong id="flight-kills">0</strong><p class="side-note">P：武器強化<br>＋：耐久回復<br>✳：ボム補給<br>◇：スコア・エネルギー</p></aside>
+    </section>
+  </div>
+  <dialog id="pause-dialog" class="game-dialog"><div class="dialog-inner"><span class="eyebrow">SIGNAL ON HOLD</span><h2>ひと息、つこう。</h2><p>準備ができたら、また星の海へ。</p><button class="primary-button" id="resume">飛行を再開する →</button><button class="secondary-button" id="retry">この出撃をやり直す</button><button class="text-button" id="pause-sound" aria-pressed="true">サウンド：オン</button><div class="audio-settings"><label>BGM <input id="music-volume" type="range" min="0" max="100" value="65"></label><label>効果音 <input id="sfx-volume" type="range" min="0" max="100" value="80"></label><label class="effects-setting"><input type="checkbox" id="effects-toggle" checked> 画面揺れ・フラッシュ</label></div><button class="text-button" id="return-hangar">ハンガーへ戻る</button></div></dialog>
+  <dialog id="result-dialog" class="game-dialog"><div class="dialog-inner"><span class="eyebrow" id="result-eyebrow">FLIGHT REPORT</span><h2 id="result-title">MISSION COMPLETE</h2><p id="result-caption"></p><div class="result-score"><span>YOUR SCORE</span><strong id="result-score">000000</strong><span id="new-record" hidden>NEW PERSONAL BEST ↗</span></div><div class="result-stats"><span>撃破数<b id="result-kills">0</b></span><span>最大コンボ<b id="result-combo">0</b></span><span>飛行時間<b id="result-time">00:00</b></span></div><button class="primary-button" id="result-retry">もう一度、出撃する ↗</button><button class="text-button" id="result-home">ハンガーへ戻る</button></div></dialog>
+  <dialog id="help-dialog" class="game-dialog help-dialog"><div class="dialog-inner"><span class="eyebrow">PILOT'S FIELD GUIDE</span><h2>飛び方は、シンプル。</h2><div class="guide-row"><b>01</b><div><h3>動く。かわす。撃ち抜く。</h3><p>指で画面をドラッグすると移動。射撃は自動です。PCではWASD／矢印キーで移動、ShiftまたはFOCUSでゆっくり移動。機体中心の白い点だけが敵弾の当たり判定です。</p></div></div><div class="guide-row"><b>02</b><div><h3>5つの武器を使い分ける。</h3><p>PULSEは広範囲、LANCEは貫通レーザー、SEEKERは追尾、WAVEは貫通波動、BURSTは近距離散弾。画面の武器ボタンかXキーで切り替え。Pアイテムで最大LV.4まで強化できます。</p></div></div><div class="guide-row"><b>03</b><div><h3>ピンチを、チャンスに。</h3><p>NOVAボム（Space）は敵弾を消して大ダメージ。撃破・かすりでゲージをため、OVERDRIVE（C）で6秒間パワーアップ。連続撃破でスコアは最大8倍。</p></div></div><div class="guide-row"><b>04</b><div><h3>3つの宙域を突破する。</h3><p>選んだ宙域から最終ボスまで連続で進みます。各宙域クリアで耐久力とボムを1つ回復。ベストスコアは開始宙域と難易度ごとに端末内へ保存します。</p></div></div><p class="offline-guide">一度オンラインで読み込み、「OFFLINE READY」の表示後はオフラインでもプレイ可能。スマホではブラウザのメニューからホーム画面に追加できます。</p><button class="primary-button" id="help-close">準備完了 →</button></div></dialog>
+  <noscript>このゲームにはJavaScriptが必要です。ブラウザの設定で有効にしてください。</noscript>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

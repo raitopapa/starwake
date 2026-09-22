@@ -1,3 +1,4 @@
+import { segmentHitsRect } from '../../shared/collision.js';
 /** Pure, deterministic simulation. No DOM, audio, wall clock, or rendering dependencies. */
 export const WIDTH = 480;
 export const HEIGHT = 720;
@@ -5,6 +6,8 @@ export const WEAPONS = [
   { name: 'PULSE', color: '#73ece3', subtitle: '広範囲ショット' },
   { name: 'LANCE', color: '#c7f879', subtitle: '前方集中レーザー' },
   { name: 'SEEKER', color: '#d8a5ff', subtitle: '追尾ミサイル' },
+  { name: 'WAVE', color: '#8ecfff', subtitle: '貫通波動砲' },
+  { name: 'BURST', color: '#ffbd86', subtitle: '近距離散弾' },
 ];
 export const STAGES = [
   { name: '蒼の軌道', english: 'ORBITAL FRONTIER', color: '#74e9e4', bg: '#071321', duration: 55, boss: 'AEGIS / 軌道防衛艦', hp: 700 },
@@ -153,7 +156,7 @@ export class Game {
     const speed = input.focus ? 130 : 300;
     if (input.target && Number.isFinite(input.target.x) && Number.isFinite(input.target.y)) {
       const dx = input.target.x - p.x, dy = input.target.y - p.y;
-      const distance = Math.hypot(dx, dy), step = Math.min(distance, 1050 * dt);
+      const distance = Math.hypot(dx, dy), step = Math.min(distance, (p.focus ? 230 : 1050) * dt);
       if (distance > 0) { p.x += dx / distance * step; p.y += dy / distance * step; }
     } else {
       let dx = input.x || 0, dy = input.y || 0;
@@ -170,7 +173,7 @@ export class Game {
     const power = drive ? 1.65 : 1;
     const add = (x, vx, vy, damage, r = 3, homing = false) => {
       if (this.shots.length >= 180) return;
-      this.shots.push({ x, y: p.y - 20, px: x, py: p.y - 20, vx, vy, damage: damage * power, r, weapon: p.weapon, homing, age: 0 });
+      this.shots.push({ x, y: p.y - 20, px: x, py: p.y - 20, vx, vy, damage: damage * power, r, weapon: p.weapon, homing, age: 0, baseX: x, hits: new Set(), piercing: p.weapon === 1 || p.weapon === 3, lifetime: p.weapon === 4 ? .64 : 4 });
     };
     if (p.weapon === 0) {
       for (const side of [-1, 1]) add(p.x + side * 7, side * 12, -650, 1.8);
@@ -181,10 +184,16 @@ export class Game {
       add(p.x, 0, -960, 3.3 + p.level * 1.25, 5 + p.level);
       if (p.level >= 3) for (const side of [-1, 1]) add(p.x + side * 15, 0, -880, 1.2, 2);
       p.fireTimer += .13 * (drive ? .65 : 1);
-    } else {
+    } else if (p.weapon === 2) {
       for (const side of [-1, 1]) add(p.x + side * 13, side * 85, -430, 2.8 + p.level * 1.1, 4, true);
       if (p.level >= 4) add(p.x, 0, -470, 3, 4, true);
       p.fireTimer += .26 * (drive ? .62 : 1);
+    }
+    if(p.weapon===3){
+      add(p.x,0,-570,4+p.level*1.4,7+p.level);p.fireTimer+=.22*(drive?.62:1);
+    }else if(p.weapon===4){
+      for(let i=-2;i<=2;i++){const a=i*.15;add(p.x,Math.sin(a)*660,-Math.cos(a)*660,2+p.level*.6,3.5);}
+      p.fireTimer+=.25*(drive?.62:1);
     }
     this.emit('shot', { weapon: p.weapon });
   }
@@ -192,7 +201,7 @@ export class Game {
   spawnEnemy(type, x, y, variant = 0) {
     const defs = { scout: [6, 17, 120, 110], wing: [9, 20, 96, 160], turret: [25, 26, 40, 350], charger: [12, 18, 90, 200], carrier: [45, 33, 36, 650] };
     const [hp, r, speed, points] = defs[type];
-    const enemy = { id: ++this.nextId, type, x, y, startX: x, r, hp: hp * this.config.enemyHp, maxHp: hp * this.config.enemyHp, speed, points, age: 0, fire: 1.25 + this.random() * 1.1, variant, flash: 0, chargeX: 0, chargeY: 0, charged: false };
+    const enemy = { id: ++this.nextId, type, x, y, px: x, py: y, startX: x, r, hp: hp * this.config.enemyHp, maxHp: hp * this.config.enemyHp, speed, points, age: 0, fire: 1.25 + this.random() * 1.1, variant, flash: 0, chargeX: 0, chargeY: 0, charged: false };
     this.enemies.push(enemy);
     return enemy;
   }
@@ -227,6 +236,7 @@ export class Game {
   updateEnemies(dt) {
     for (const e of this.enemies) {
       if (e.hp <= 0) continue;
+      e.px = e.x; e.py = e.y;
       e.age += dt; e.fire -= dt; e.flash = Math.max(0, e.flash - dt);
       if (e.type === 'wing') {
         e.y += e.speed * dt;
@@ -252,7 +262,7 @@ export class Game {
         } else this.aimedShot(e, this.stage > 0 ? 2 : 1, .13, 150 + this.stage * 15);
         e.fire = (e.type === 'turret' ? 1.5 : e.type === 'carrier' ? 2 : 2.8) * this.config.fireRate;
       }
-      if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < e.r + 9) this.hitPlayer();
+      if (segmentHitsCircle(e.px-this.player.px,e.py-this.player.py,e.x-this.player.x,e.y-this.player.y,0,0,e.r+9)) this.hitPlayer();
       if (this.state !== 'playing') return;
     }
   }
@@ -261,13 +271,14 @@ export class Game {
     this.bossSpawned = true;
     this.enemies.length = 0;
     this.clearBullets();
-    this.boss = { x: WIDTH / 2, y: -120, r: 66, hp: STAGES[this.stage].hp * this.config.enemyHp, maxHp: STAGES[this.stage].hp * this.config.enemyHp, age: 0, fire: 1, special: 6, phase: 1, flash: 0, volley: 0 };
+    this.boss = { x: WIDTH / 2, y: -120, px: WIDTH / 2, py: -120, r: 66, hp: STAGES[this.stage].hp * this.config.enemyHp, maxHp: STAGES[this.stage].hp * this.config.enemyHp, age: 0, fire: 1, special: 6, phase: 1, flash: 0, volley: 0 };
     this.banner = { title: STAGES[this.stage].boss, sub: 'WARNING / MASSIVE SIGNAL DETECTED', time: 3.2, warning: true };
     this.emit('warning');
   }
   updateBoss(dt) {
     const b = this.boss;
     if (!b || this.transitionTimer > 0) return;
+    b.px=b.x;b.py=b.y;
     b.age += dt; b.flash = Math.max(0, b.flash - dt);
     b.y += (160 - b.y) * Math.min(1, dt * 1.7);
     if (b.age < 3) return;
@@ -336,14 +347,15 @@ export class Game {
         }
       }
       s.x += s.vx * dt; s.y += s.vy * dt;
+      if(s.weapon===3){s.x=s.baseX+Math.sin(s.age*18)*20;s.r=Math.min(18,8+s.age*11);}
       for (const e of this.enemies) {
-        if (e.hp > 0 && segmentHitsCircle(s.px, s.py, s.x, s.y, e.x, e.y, e.r + s.r)) { this.damageEnemy(e, s.damage); s.dead = true; break; }
+        if (e.hp > 0 && !s.hits.has(e.id) && segmentHitsCircle(s.px-e.px,s.py-e.py,s.x-e.x,s.y-e.y,0,0,e.r+s.r)) { s.hits.add(e.id);this.damageEnemy(e,s.damage);if(!s.piercing){s.dead=true;break;} }
       }
-      if (!s.dead && this.boss && this.boss.age > 2 && segmentHitsCircle(s.px, s.py, s.x, s.y, this.boss.x, this.boss.y, this.boss.r + s.r)) {
-        this.damageBoss(s.damage); s.dead = true;
+      if (!s.dead && this.boss && this.boss.age > 2 && !s.hits.has('boss') && segmentHitsCircle(s.px-this.boss.px,s.py-this.boss.py,s.x-this.boss.x,s.y-this.boss.y,0,0,this.boss.r+s.r)) {
+        s.hits.add('boss');this.damageBoss(s.damage);if(!s.piercing)s.dead=true;
       }
     }
-    this.shots = this.shots.filter(s => !s.dead && s.y > -50 && s.y < HEIGHT + 40 && s.x > -60 && s.x < WIDTH + 60 && s.age < 4);
+    this.shots = this.shots.filter(s => !s.dead && s.y > -50 && s.y < HEIGHT + 40 && s.x > -60 && s.x < WIDTH + 60 && s.age < s.lifetime);
   }
   updateBullets(dt) {
     const p = this.player;
@@ -357,7 +369,7 @@ export class Game {
         b.grazed = true;
         this.energy = Math.min(100, this.energy + 2);
         this.score += Math.round(8 * this.config.score);
-        this.sparks(p.x, p.y, '#c4f36b', 2);
+        this.sparks(p.x, p.y, '#c4f36b', 2);this.emit('graze');
       }
       if (this.state !== 'playing') break;
     }
@@ -368,7 +380,7 @@ export class Game {
       const wasWarning = laser.age < laser.warning;
       laser.age += dt;
       if (wasWarning && laser.age >= laser.warning) this.emit('laser');
-      if (laser.age >= laser.warning && laser.age <= laser.warning + laser.duration && this.player.y > laser.y && Math.abs(this.player.x - laser.x) < laser.width / 2 + this.player.radius) this.hitPlayer();
+      if (laser.age >= laser.warning && laser.age <= laser.warning + laser.duration && segmentHitsRect(this.player.px,this.player.py,this.player.x,this.player.y,laser.x-laser.width/2-this.player.radius,laser.y-this.player.radius,laser.x+laser.width/2+this.player.radius,HEIGHT+this.player.radius)) this.hitPlayer();
     }
     this.lasers = this.lasers.filter(l => l.age < l.warning + l.duration);
   }

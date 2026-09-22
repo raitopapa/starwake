@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Input } from '../src/input.js';
+import { Input } from '../vertical/src/input.js';
 
 class Surface {
   listeners = new Map();
@@ -25,4 +25,15 @@ test('keyboard auto-repeat cannot spend multiple bombs and blur releases held mo
   window.emit('keydown',{code:'Space',repeat:false});window.emit('keydown',{code:'Space',repeat:true});assert.deepEqual(actions,['bomb']);
   window.emit('keydown',{code:'KeyD'});window.emit('keydown',{code:'ShiftLeft'});assert.equal(input.read().x,1);assert.equal(input.read().focus,true);
   window.emit('blur');assert.equal(input.read().x,0);assert.equal(input.read().focus,false);
+});
+
+import { Input as HorizontalInput } from '../horizontal/src/input.js';
+test('HORIZON pointer scaling is isotropic and the second touch cannot hijack movement',()=>{
+  const canvas=new Surface();globalThis.window=new Surface();const actions=[];
+  const input=new HorizontalInput(canvas,{active:()=>true,action:a=>actions.push(a),position:()=>({x:155,y:270})});
+  canvas.emit('pointerdown',{pointerId:1,clientX:50,clientY:80});assert.deepEqual(input.target,{x:155,y:270});
+  canvas.emit('pointermove',{pointerId:1,clientX:70,clientY:90});assert.deepEqual(input.target,{x:235,y:310});
+  canvas.emit('pointerdown',{pointerId:2,clientX:40,clientY:20});canvas.emit('pointermove',{pointerId:2,clientX:240,clientY:320});assert.deepEqual(input.target,{x:235,y:310});
+  window.emit('keydown',{code:'KeyZ',repeat:false});window.emit('keydown',{code:'KeyZ',repeat:true});assert.deepEqual(actions,['equip']);
+  canvas.emit('pointercancel',{pointerId:1});assert.equal(input.target,null);input.focusHeld=true;window.emit('blur');assert.equal(input.read().focus,false);
 });
