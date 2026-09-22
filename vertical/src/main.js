@@ -1,6 +1,6 @@
 import { Game, STAGES, WEAPONS } from './engine.js';
 import { Renderer, HeroRenderer } from './render.js';
-import { AudioEngine } from './audio.js';
+import { AudioEngine } from '../../shared/audio.js';
 import { Input } from './input.js';
 import { readSave, writeSave, recordRun } from './storage.js';
 
@@ -11,10 +11,10 @@ const setText = (id, value) => { const element = $(id); if (element.textContent 
 let storage;
 try { storage = window.localStorage; } catch { storage = null; }
 const save = readSave(storage);
-const audio = new AudioEngine();
-audio.setEnabled(save.sound);
+const audio = new AudioEngine({variant:'vertical'});
+audio.setEnabled(save.sound);audio.setVolumes(save.music,save.sfx);
 const hero = new HeroRenderer($('hero-canvas'));
-const renderer = new Renderer($('game-canvas'));
+const renderer = new Renderer($('game-canvas'));renderer.effects=save.effects;
 let game = null, active = false, resultShown = false;
 let lastFrame = performance.now(), accumulator = 0, lastHud = 0, lastHero = 0, healthMarkup = '';
 const input = new Input($('game-canvas'), {
@@ -51,6 +51,7 @@ function selectStage(stage) {
 function launch() {
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
   input.reset();
+  audio.stop();
   game=new Game({difficulty:save.difficulty,startStage:save.stage,seed:Math.floor(Math.random()*0xffffffff)});
   active=true;resultShown=false;accumulator=0;lastFrame=performance.now();
   $('hangar').hidden=true;$('flight').hidden=false;document.body.classList.add('in-flight');
@@ -77,7 +78,7 @@ function goHome() {
   updateBest();hero.resize();hero.draw();$('launch').focus({preventScroll:true});
 }
 function showResult() {
-  if(resultShown)return;resultShown=true;input.reset();audio.stop();
+  if(resultShown)return;resultShown=true;input.reset();audio.stop();audio.effect({type:game.state==='victory'?'victory':'gameover'});
   const record=recordRun(save,game);persist();updateBest();
   const won=game.state==='victory';
   setText('result-eyebrow',won?'SIGNAL DELIVERED / FLIGHT REPORT':'SIGNAL LOST / FLIGHT REPORT');
@@ -106,9 +107,15 @@ function updateHud() {
   const banner=$('mission-banner');banner.hidden=game.banner.time<=0;
   if(game.banner.time>0){const content=`<span>${game.banner.sub}</span>${game.banner.title}`;if(banner.innerHTML!==content)banner.innerHTML=content;banner.classList.toggle('warning',game.banner.warning);}
   $('touch-tip').hidden=game.time>9;
+  $('focus').setAttribute('aria-pressed',String(input.read().focus));
 }
 
 $('launch').addEventListener('click',launch);
+$('focus').addEventListener('click',()=>{if(game?.state==='playing')input.focusHeld=!input.focusHeld;});
+for(const name of ['music','sfx']){const slider=$(name+'-volume');slider.value=Math.round(save[name]*100);slider.addEventListener('input',()=>{save[name]=Number(slider.value)/100;audio.setVolumes(save.music,save.sfx);persist();});}
+$('effects-toggle').checked=save.effects;
+$('effects-toggle').addEventListener('change',()=>{save.effects=$('effects-toggle').checked;renderer.effects=save.effects;persist();});
+
 $('sound-toggle').addEventListener('click',toggleSound);$('pause-sound').addEventListener('click',toggleSound);
 $('pause').addEventListener('click',pauseGame);$('resume').addEventListener('click',resumeGame);
 $('retry').addEventListener('click',launch);$('return-hangar').addEventListener('click',goHome);
@@ -147,6 +154,6 @@ function frame(now) {
 }
 selectStage(save.stage);updateSound();requestAnimationFrame(frame);
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
-  navigator.serviceWorker.register('./sw.js').then(async()=>{await navigator.serviceWorker.ready;setText('offline-status','OFFLINE READY');}).catch(()=>setText('offline-status','ONLINE PLAY / オフライン保存は未完了'));
+  navigator.serviceWorker.register('../sw.js',{scope:'../'}).then(async()=>{await navigator.serviceWorker.ready;setText('offline-status','OFFLINE READY');}).catch(()=>setText('offline-status','ONLINE PLAY / オフライン保存は未完了'));
 }
 if(location.protocol==='file:')setText('offline-status','STANDALONE / OFFLINE');

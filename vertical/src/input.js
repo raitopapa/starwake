@@ -3,7 +3,7 @@ import { WIDTH, HEIGHT, clamp } from './engine.js';
 export class Input {
   constructor(canvas, { active, action, position }) {
     this.canvas=canvas;this.active=active;this.action=action;this.position=position;
-    this.keys=new Set();this.target=null;this.pointerId=null;this.lastPointer=null;
+    this.focusHeld=false;this.keys=new Set();this.target=null;this.pointerId=null;this.lastPointer=null;
     window.addEventListener('keydown',event=>{
       if(event.code==='Escape'&&this.active()){event.preventDefault();if(!event.repeat)this.action('pause');return;}
       if(!this.active())return;
@@ -31,6 +31,6 @@ export class Input {
     canvas.addEventListener('contextmenu',event=>event.preventDefault());
   }
   point(event){const rect=this.canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)/rect.width*WIDTH,y:(event.clientY-rect.top)/rect.height*HEIGHT};}
-  reset(){this.keys.clear();this.pointerId=null;this.target=null;this.lastPointer=null;}
-  read(){return{x:Number(this.keys.has('ArrowRight')||this.keys.has('KeyD'))-Number(this.keys.has('ArrowLeft')||this.keys.has('KeyA')),y:Number(this.keys.has('ArrowDown')||this.keys.has('KeyS'))-Number(this.keys.has('ArrowUp')||this.keys.has('KeyW')),focus:this.keys.has('ShiftLeft')||this.keys.has('ShiftRight'),target:this.target};}
+  reset(){this.focusHeld=false;this.keys.clear();this.pointerId=null;this.target=null;this.lastPointer=null;}
+  read(){return{x:Number(this.keys.has('ArrowRight')||this.keys.has('KeyD'))-Number(this.keys.has('ArrowLeft')||this.keys.has('KeyA')),y:Number(this.keys.has('ArrowDown')||this.keys.has('KeyS'))-Number(this.keys.has('ArrowUp')||this.keys.has('KeyW')),focus:this.focusHeld||this.keys.has('ShiftLeft')||this.keys.has('ShiftRight'),target:this.target};}
 }

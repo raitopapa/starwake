@@ -1,10 +1,14 @@
-const KEY = 'starwake.v1';
-const defaults = () => ({ sound: true, difficulty: 'pilot', stage: 0, records: {} });
+const KEY = 'starwake.zenith.v2';
+const defaults = () => ({ sound: true, music: .65, sfx: .8, effects: true, difficulty: 'pilot', stage: 0, records: {} });
 export function readSave(storage) {
   try {
-    const raw = JSON.parse(storage.getItem(KEY));
+    const current = storage.getItem(KEY);
+    const raw = JSON.parse(current || storage.getItem('starwake.v1'));
+    if (!current && raw) raw.records = {};
     if (!raw || typeof raw !== 'object') return defaults();
     const data = defaults();
+    for(const key of ['music','sfx'])if(Number.isFinite(raw[key]))data[key]=Math.max(0,Math.min(1,raw[key]));
+    if(typeof raw.effects==='boolean')data.effects=raw.effects;
     data.sound = typeof raw.sound === 'boolean' ? raw.sound : true;
     data.difficulty = ['cadet', 'pilot', 'ace'].includes(raw.difficulty) ? raw.difficulty : 'pilot';
     data.stage = Number.isInteger(raw.stage) && raw.stage >= 0 && raw.stage <= 2 ? raw.stage : 0;

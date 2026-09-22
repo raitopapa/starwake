@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Game, WIDTH, HEIGHT, STAGES, segmentHitsCircle } from '../src/engine.js';
-import { readSave, writeSave, recordRun } from '../src/storage.js';
+import { Game, WIDTH, HEIGHT, STAGES, segmentHitsCircle } from '../vertical/src/engine.js';
+import { readSave, writeSave, recordRun } from '../vertical/src/storage.js';
 
 function tick(game,seconds,input={}){for(let i=0;i<Math.ceil(seconds*120);i++){game.update(1/120,input);game.drainEvents();}}
 function quiet(){const g=new Game();g.nextWave=999;return g;}
@@ -30,7 +30,7 @@ test('touch movement across an enemy bullet cannot tunnel',()=>{
   const g=quiet();g.player.invincible=0;g.fireBullet(g.player.x+25,g.player.y,0,0);g.update(.05,{target:{x:g.player.x+60,y:g.player.y}});assert.equal(g.player.health,4);
 });
 test('all weapons cause real enemy damage',()=>{
-  for(let weapon=0;weapon<3;weapon++){const g=quiet();g.player.weapon=weapon;g.player.level=3;const e=g.spawnEnemy('carrier',g.player.x,350);e.speed=0;tick(g,4);assert.ok(e.hp<=0,`weapon ${weapon} failed`);assert.ok(g.kills>0);}
+  for(let weapon=0;weapon<5;weapon++){const g=quiet();g.player.weapon=weapon;g.player.level=3;const e=g.spawnEnemy('carrier',g.player.x,350);e.speed=0;tick(g,4);assert.ok(e.hp<=0,`weapon ${weapon} failed`);assert.ok(g.kills>0);}
 });
 test('bomb consumes one charge, clears bullets and lasers, and cannot be spammed',()=>{
   const g=quiet();g.spawnEnemy('carrier',240,200);g.fireBullet(100,200,1,200);g.lasers.push({x:50,age:0});assert.equal(g.useBomb(),true);assert.equal(g.bombs,2);assert.equal(g.useBomb(),false);assert.equal(g.bullets.length,0);assert.equal(g.lasers.length,0);assert.equal(g.kills,1);g.fireBullet(200,200,1,200);assert.equal(g.bullets.length,0);

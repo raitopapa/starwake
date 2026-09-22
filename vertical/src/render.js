@@ -171,7 +171,7 @@ export class Renderer {
     const r=seededRandom(557);
     this.stars=Array.from({length:125},()=>({x:r()*WIDTH,y:r()*HEIGHT,z:.15+r()*.85,size:r()>.94?1.4:.6}));
     this.rocks=Array.from({length:12},()=>({x:r()*WIDTH,y:r()*HEIGHT,r:4+r()*12,spin:r()*TAU}));
-    this.reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.effects=true;this.reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.resize();
   }
   resize() {
@@ -206,7 +206,7 @@ export class Renderer {
     const c=this.c;c.setTransform(this.canvas.width/WIDTH,0,0,this.canvas.height/HEIGHT,0,0);
     this.background(game.stage,game.time);
     c.save();
-    if(!this.reduceMotion&&game.shake>0)c.translate(Math.sin(game.time*177)*game.shake,Math.cos(game.time*143)*game.shake*.65);
+    if(!this.reduceMotion&&this.effects&&game.shake>0)c.translate(Math.sin(game.time*177)*game.shake,Math.cos(game.time*143)*game.shake*.65);
     for(const laser of game.lasers){
       const warning=laser.age<laser.warning;
       if(warning){c.fillStyle=`rgba(255,90,135,${.04+laser.age*.06})`;c.fillRect(laser.x-laser.width/2,laser.y,laser.width,HEIGHT);c.setLineDash([9,8]);path(c,[[laser.x,laser.y],[laser.x,HEIGHT]],'#ff97b888',1);c.setLineDash([]);}
@@ -223,6 +223,8 @@ export class Renderer {
       const color=WEAPONS[s.weapon].color;
       c.save();c.translate(s.x,s.y);c.rotate(Math.atan2(s.vy,s.vx)+Math.PI/2);
       if(s.weapon===1){c.fillStyle=`${color}25`;c.fillRect(-s.r,-23,s.r*2,43);c.fillStyle=color;c.fillRect(-s.r*.5,-23,s.r,34);c.fillStyle='#f5fff0';c.fillRect(-1.5,-23,3,32);}
+      else if(s.weapon===3){c.strokeStyle=color;c.lineWidth=2;c.beginPath();c.ellipse(0,0,s.r,7,0,Math.PI,Math.PI*2);c.stroke();c.strokeStyle=`${color}35`;c.lineWidth=7;c.stroke();}
+      else if(s.weapon===4){polygon(c,[[-3,4],[0,-7],[3,4]],'#ffd5a6');path(c,[[0,4],[0,13]],'#ffa17780',2);}
       else if(s.homing){polygon(c,[[-3,4],[0,-11],[3,4]],'#efe2ff');path(c,[[0,4],[0,20]],'#c792ff85',3);}
       else{c.fillStyle=`${color}33`;c.fillRect(-5,-8,10,25);c.fillStyle=color;c.fillRect(-2,-8,4,17);c.fillStyle='#eaffee';c.fillRect(-1,-8,2,8);}c.restore();
     }
@@ -238,16 +240,16 @@ export class Renderer {
       drawShip(c,p.x,p.y,.8,p.bank,game.time,game.driveTimer>0);
       c.globalAlpha=1;
       if(game.driveTimer>0){c.strokeStyle='#c4f36b66';c.lineWidth=1;c.beginPath();c.arc(p.x,p.y,34,game.time*4,game.time*4+Math.PI*1.5);c.stroke();}
-      circle(c,p.x,p.y,5,'#071921');circle(c,p.x,p.y,2.7,'#effff4');
+      circle(c,p.x,p.y,5,'#071921');circle(c,p.x,p.y,p.radius,'#effff4');circle(c,p.x,p.y,1.4,'#7dccb6');
       if(p.focus){c.strokeStyle='#f0fffcb0';c.lineWidth=.7;c.beginPath();c.arc(p.x,p.y,10,0,TAU);c.stroke();}
     }
     // Bullets always render above explosions and ships for readable dodging.
-    for(const particle of game.particles){c.globalAlpha=particle.life/particle.maxLife;c.fillStyle=particle.color;c.fillRect(particle.x,particle.y,particle.size,particle.size*1.5);}c.globalAlpha=1;
+    for(const particle of game.particles){c.globalAlpha=particle.life/particle.maxLife;c.fillStyle=particle.color;path(c,[[particle.x-particle.vx*.025,particle.y-particle.vy*.025],[particle.x,particle.y]],particle.color,particle.size);}c.globalAlpha=1;
     for(const ring of game.rings){c.globalAlpha=ring.life/ring.maxLife;c.strokeStyle=ring.color;c.lineWidth=2;c.beginPath();c.arc(ring.x,ring.y,ring.radius,0,TAU);c.stroke();}c.globalAlpha=1;
     for(const b of game.bullets){circle(c,b.x,b.y,b.r+2.3,'#190f25');circle(c,b.x,b.y,b.r,b.color);circle(c,b.x-b.r*.18,b.y-b.r*.22,b.r*.46,'#ffe8dc');}
     for(const l of game.labels){c.globalAlpha=Math.min(1,l.life*3);c.fillStyle=l.color;c.font=l.text.length>5?'bold 11px monospace':'9px monospace';c.textAlign='center';c.fillText(l.text,clamp(l.x,55,WIDTH-55),l.y);}c.globalAlpha=1;
     c.restore();
-    if(game.flash>0&&!this.reduceMotion){c.fillStyle=`rgba(215,250,237,${Math.min(.28,game.flash*.6)})`;c.fillRect(0,0,WIDTH,HEIGHT);}
+    if(game.flash>0&&!this.reduceMotion&&this.effects){c.fillStyle=`rgba(215,250,237,${Math.min(.28,game.flash*.6)})`;c.fillRect(0,0,WIDTH,HEIGHT);}
     const top=c.createLinearGradient(0,0,0,115);top.addColorStop(0,'#06101ce8');top.addColorStop(1,'#06101c00');c.fillStyle=top;c.fillRect(0,0,WIDTH,115);
     const bottom=c.createLinearGradient(0,HEIGHT-100,0,HEIGHT);bottom.addColorStop(0,'transparent');bottom.addColorStop(1,'#05101dd9');c.fillStyle=bottom;c.fillRect(0,HEIGHT-100,WIDTH,100);
   }
