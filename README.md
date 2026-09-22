@@ -117,7 +117,7 @@ PCではHTMLをブラウザで直接開いて遊べます。スマホのファ�
 
 Canvasの描画を画像化し、全6ボス戦を確認しています。任意の再生成ツール `tools/render-previews.mjs` は `@napi-rs/canvas` を使用しますが、ゲーム本体には不要です。
 
-この作業環境ではローカルページのブラウザ実行が制限されているため、実機のタッチ操作、画面回転、Web Audioの出音、PWAインストールとオフライン再読込は未確認です。自動テスト・描画確認と実機確認を区別しています。公開後は `tests/responsive.html` と実際のSafari／Chromeで確認してください。
+GitHub Actionsでテスト・ビルド・Pages公開が成功し、公開先のChromeで両ゲームの出撃とCanvas描画、横型の撃破・スコア進行・ボム・一時停止を確認しました。実機のタッチ操作、画面回転、Web Audioの出音、PWAインストールとオフライン再読込は未確認です。`tests/responsive.html` と実際のSafari／Chromeでも確認できます。
 
 ## 制作物
 
